@@ -1,148 +1,159 @@
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>VR World</title>
-    <!--To build our VR world using a framework, we need to link A-frame with our HTML document. for this purpose drop a <script> tag pointing to the CDN build.-->
-    <script src="https://aframe.io/releases/0.8.2/aframe.min.js"></script>
-    <script src="js/aframe-particle-system-component.min.js"></script>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>VR Workshop</title>
+        <meta charset="utf-8">
+        <meta property="og:title" content="VR Workshop"/>
+        <meta property="og:type" content="website"/>
+        <meta property="og:image" content="https://vr.marpi.pl/assets/image.jpg"/>
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+
+        <script src="js/third-party/threejs/three.js"></script>
+        <script src="js/third-party/threejs/controls/DeviceOrientationControls.js"></script>
+        <script src="js/third-party/threejs/controls/OrbitControls.js"></script>
+        <script src="js/third-party/threejs/effects/StereoEffect.js"></script>
+        <script src="js/utils/helpers.js"></script>
+
+        <script>
+            var user = false;
+
+            var camera, scene, renderer;
+            var effect;
+            var mobile = false;
+            var globe
+            var group
+
+            init();
+            animate();
+
+            function init() {
+
+                // setup
+
+                renderer = new THREE.WebGLRenderer({antialias: true});
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0)
+                document.body.appendChild(renderer.domElement);
+
+                scene = new THREE.Scene();
+
+                camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 0, 3);
+                camera.focalLength = camera.position.distanceTo(scene.position);
+                camera.lookAt(scene.position);
+
+                controls = new THREE.OrbitControls(camera);
+                controls.autoRotate = true;
+                controls.enablePan = false;
+
+                // central object
+
+                var cubeMap = getCubeMap(1)
+
+                var material = new THREE.MeshPhongMaterial({side: THREE.DoubleSide, envMap: getCubeMap(1), color: 0xFFFFFF, shading: THREE.FlatShading});
+                var geometry = new THREE.SphereGeometry(2.6, 50, 50)//  30, 30)
+
+                var mod = .3;
+                for (var i = 0; i < geometry.vertices.length; i++) {
+                    var v = geometry.vertices[i]
+                    var ran = Math.random()
+                    v.x *= ran;
+                    v.y *= ran;
+                    v.z *= ran;
+                }
+                globe = new THREE.Mesh(geometry, material);
+                scene.add(globe);
 
 
-           <div id="myModal" class="modal fade">
-                <div class="modal-dialog">
-                        <div class="modal-content">
-                                <div class="modal-header">
-                                        <h2>Web-Vr 3D Solar System</h2>
-                                        <div class="btnClose" data-dismiss="modal">&times;</div>
-                                </div>
-                                <div class="modal-body">
-                                        <ul>
-                                                <li>By Justine Carl Villanueva</li>
-                                                <li>Best experienced on a VR headset</li>
-                                        </ul>
-                                </div>
-                        </div>
-                </div>
-        </div>
-    <a-scene do-something particle-system="preset: dust; particleCount: 1000">
-<!-- In order to start creating our virtual world, we must create a scene. The scene is the main tag, everything that we want to put inside of our world will go inside of this tag, that includes the primitives, the camera, and many more.-->
+                // Background
 
-<a-assets>
-  
-  <img
-    id="sun_img"
-    src="assets/src/sun.jpg"
-  />
-  <img
-    id="mercury_img"
-    src="assets/src/mercury.jpg"
-  />
-  <img
-    id="venus_img"
-    src="assets/src/venus.jpg"
-  />
-  <img
-    id="earth_img"
-    src="assets/src/earth.jpg"
-  />
-  <img
-    id="mars_img"
-    src="assets/src/marse.jpg"
-  />
-  <img
-    id="jupiter_img"
-    src="assets/src/jupiter.jpg"
-  />
-  <img
-    id="saturn_img"
-    src="assets/src/saturn.jpg"
-  />
-  <img
-    id="uranus_img"
-    src="assets/src/uranus.jpg"
-  />
-  <img
-    id="neptune_img"
-    src="assets/src/neptune.jpg"
-  />
-</a-assets>
-      <a-entity position="0 2 0">
-        <a-entity camera look-controls wasd-controls>
-          <a-entity position="0 0 -3"
-                    geometry="primitive: ring; radiusInner: 0.1; radiusOuter: 0.2;"
-                    material="color: red; shader: flat"
-                    cursor="fuse: true">
-            <a-animation begin="fusing" easing="ease-in" attribute="scale" 
-              fill="backwards" from="1 1 1" to="0.2 0.2 0.2" dur="1500">
-            </a-animation>
-            <a-animation begin="click" easing="ease-in" attribute="scale" dur="1500"
-                fill="forwards" from="0.1 0.1 0.1" to="1 1 1">
-            </a-animation>
+                var cubeShader = THREE.ShaderLib['cube'];
+                cubeShader.uniforms['tCube'].value = cubeMap;
 
-            <a-entity id="card_data" visible="false" position="0 3.5 -4" geometry="primitive: plane; height: 5; width: 5" material="side: double">
-              <a-text font="monoid" id="planet_text" position="-1 2 0" width="14" value ="Loading" color="#000"></a-text>
-              <a-text font="dejavu" id="mass_text" position="-2 1 0" width="7" value ="Loading" color="#000"></a-text>
-              <a-text font="dejavu" id="volume_text" position="-2 0 0" width="7" value ="Loading" color="#000"></a-text>
-              <a-text font="dejavu" id="gravity_text" position="-2 -1 0" width="7" value ="Loading" color="#000"></a-text>
-            </a-entity>
-          </a-entity>
-        </a-entity>
-    </a-entity>
+                var skyBoxMaterial = new THREE.ShaderMaterial({
+                    fragmentShader: cubeShader.fragmentShader,
+                    vertexShader: cubeShader.vertexShader,
+                    uniforms: cubeShader.uniforms,
+                    depthWrite: false,
+                    side: THREE.BackSide
+                });
 
-      <a-sphere id="sol" position="0 2 -7" radius="3.5" src="#sun_img">
- 
-        <a-entity position="0 -3 -1" particle-system="color: #EF0000,#44CC00;size: 0.2;maxAge:10;particleCount:300;texture:https://cdn.glitch.com/c1051546-359f-4e34-b17d-bd2b8900be35%2Fthumbnails%2F2k_sun.jpg?1599075846071"></a-entity>
-      </a-sphere>
+                var skyBox = new THREE.Mesh(new THREE.CubeGeometry(100, 100, 100), skyBoxMaterial);
+                scene.add(skyBox);
 
-      <a-sphere id="mercury" position="5 2 -4" radius="0.5" src="#mercury_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000" loop: true
-      repeat="indefinite"></a-animation>
+                // cubes
 
+                group = new THREE.Object3D();
+                for (var _x = -3; _x <= 3; _x++) {
+                    for (var _y = -3; _y <= 3; _y++) {
+                        for (var _z = -3; _z <= 3; _z++) {
+                            var geo = new THREE.BoxGeometry(.1, .1, .1, 1, 1, 1)
+                            var mesh = new THREE.Mesh(geo, material)
+                            mesh.position.set(_x, _y, _z)
+                            group.add(mesh);
+                        }
+                    }
+                }
 
-      </a-sphere>
+                // merge
 
-      <a-sphere id="venus" position="6 2 0" radius="0.75" src="#venus_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
+                var geom = new THREE.Geometry()
+                for (var i = 0; i < group.children.length; i++) {
+                    group.children[i].updateMatrix();
+                    geom.merge(group.children[i].geometry, group.children[i].matrix);
+                }
+                var mod = .3;
+                for (var i = 0; i < geom.vertices.length; i++) {
+                    var v = geom.vertices[i]
+                    v.x += (Math.random() - .5) * mod
+                    v.y += (Math.random() - .5) * mod
+                    v.z += (Math.random() - .5) * mod
+                }
 
-      <a-sphere id="earth" position="0 2 5" radius="1" src="#earth_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
+                group = new THREE.Mesh(geom, material);
+                scene.add(group)
 
-      <a-sphere id="mars" position="-8 2 7" radius="0.5" src="#mars_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
+                // light
 
-      <a-sphere id="jupiter" position="-16 2 2" radius="1.5" src="#jupiter_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
+                var light = new THREE.DirectionalLight(0xffffff);
+                light.position.set(-1, 1.5, 0.5);
+                scene.add(light);
 
-      <a-sphere id="saturn" position="-21 2 -6" radius="1.25" src="#saturn_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
-      <a-entity position="-16 2 2" geometry="primitive: circle; radius: 2.5" material="side: double" color="#F0EABA"></a-entity>
+                // events
 
-      <a-sphere id="uranus" position="-26 2 -15" radius="1" src="#uranus_img"
-      >
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
+                window.addEventListener('deviceorientation', setOrientationControls, true);
+                window.addEventListener('resize', onWindowResize, false);
 
-      <a-sphere id="neptune" position="-24 2 -26" radius="1" src="#neptune_img">
-        <a-animation attribute="rotation" from="0 45 45" to="0 360 0" direction="alternate" dur="30000"
-      repeat="indefinite"></a-animation>
-      </a-sphere>
-      
-      <a-sky src="https://cdn.glitch.com/c1051546-359f-4e34-b17d-bd2b8900be35%2Fthumbnails%2F2k_stars_milky_way.jpg?1599075382958"></a-sky>
+            }
 
-      <a-sound src="#background" autoplay="true"></a-sound> <!-- we can add sound to our vr world using this tag. Here we use autoplay because we want the sound to start playing when the user joins our world.-->
-    </a-scene>
-    <script type="text/javascript" src="js/app.js"></script>
-  </body>
+            function animate() {
+
+                requestAnimationFrame(animate);
+                render();
+
+            }
+
+            function render() {
+
+                controls.update();
+
+                if (mobile) {
+                    camera.position.set(0, 0, 0)
+                    camera.translateZ(5);
+                }
+                renderer.render(scene, camera);
+
+            }
+
+        </script>
+    </body>
 </html>
